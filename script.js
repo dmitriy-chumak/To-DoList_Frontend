@@ -1,20 +1,15 @@
 let allTasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let input = null;
-let valueInput = "";
 
 window.onload = () => {
-  input = document.getElementsByClassName("input-data__input")[0];
-  input.addEventListener("change", getInputValue);
+  input = document.querySelector("input"); //document 100% have a input
   input.focus();
   render();
 };
 
-getInputValue = (event) => {
-  valueInput = event.target.value;
-};
 
-onClickButton = () => {
-  if (!valueInput.trim() && valueInput !== "0") {
+const addTask = () => {
+  if (!input.value.trim() && input.value !== "0") {
     alert("Поле не может быть пустым");
     input.classList.add("invalid");
     return;
@@ -23,36 +18,36 @@ onClickButton = () => {
   input.classList.remove("invalid");
 
   allTasks.push({
-    text: valueInput,
+    text: input.value,
     isCheck: false,
   });
   localStorage.setItem("tasks", JSON.stringify(allTasks));
-  valueInput = "";
   input.value = "";
 
   render();
 };
 
-render = () => {
-  const content = document.getElementsByClassName("content")[0];
+const render = () => {
+  const content = document.getElementsByClassName("content")[0]; //If content === null, we skip next step and started render page 
   while (content.firstChild) {
     content.removeChild(content.firstChild);
   }
 
-  allTasks.map((element, index) => {
+  allTasks.forEach((element, index) => {
+    const {text: textTask, isCheck: checkTask} = element;
     const container = document.createElement("div");
     container.id = `task-${index}`;
     container.className = "task-container";
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
-    checkbox.checked = element.isCheck;
+    checkbox.checked = checkTask;
     checkbox.onchange = () => {
       onChangeCheckbox(index);
     };
     container.appendChild(checkbox);
     const text = document.createElement("p");
-    text.innerText = element.text;
-    text.className = element.isCheck ? "text-task done-text" : "text-task";
+    text.innerText = textTask;
+    text.className = checkTask ? "text-task done-text" : "text-task";
     container.appendChild(text);
 
     if (!element.isCheck) {
@@ -66,7 +61,7 @@ render = () => {
       buttonEdit.appendChild(imageEdit);
       container.appendChild(buttonEdit);
       buttonEdit.onclick = () => {
-        editClick(index);
+        changeTask(index);
       };
     }
 
@@ -80,40 +75,40 @@ render = () => {
     buttonDelete.appendChild(imageDelete);
     container.appendChild(buttonDelete);
     buttonDelete.onclick = () => {
-      deleteClick(index);
+      removeTask(index);
     };
 
     content.appendChild(container);
   });
 };
 
-onChangeCheckbox = (index) => {
+const onChangeCheckbox = (index) => {
   allTasks[index].isCheck = !allTasks[index].isCheck;
   allTasks = _.sortBy(allTasks, "isCheck");
   localStorage.setItem("tasks", JSON.stringify(allTasks));
   render();
 };
 
-deleteClick = (index) => {
+const removeTask = (index) => {
   const flag = confirm("Вы действительно хотите удалить задачу?");
   if (flag) {
     allTasks.splice(index, 1);
     localStorage.setItem("tasks", JSON.stringify(allTasks));
-    render();
   }
   render();
 };
 
-editClick = (index) => {
-  let item = document.getElementById(`task-${index}`);
-  let textValue = allTasks[index].text;
-  let child = item.querySelectorAll(".container__button");
-  child.forEach((element) => {
+const changeTask = (index) => {
+  const item = document.getElementById(`task-${index}`);
+  const textValue = allTasks[index].text;
+  let buttonArray = item.querySelectorAll(".container__button"); //item && buttonArray cannot be equal to null because if they are null, then the elements do not exist, and if they do not exist, we will not be able to get into this script
+
+  buttonArray.forEach((element) => {
     item.removeChild(element);
   });
 
-  child = item.querySelector(".text-task");
-  item.removeChild(child);
+  buttonArray = item.querySelector(".text-task");
+  item.removeChild(buttonArray);
 
   const editInput = document.createElement("input");
   editInput.value = textValue;
@@ -148,12 +143,13 @@ editClick = (index) => {
   };
 };
 
-confirmChange = (editText, index) => {
+const confirmChange = (editText, index) => {
   if (!editText) {
     alert("Нельзя сохранить задачу без текста");
+
     return render();
   }
+  allTasks[index].text = editText;  
   localStorage.setItem("tasks", JSON.stringify(allTasks));
-  allTasks[index].text = editText;
   render();
 };
