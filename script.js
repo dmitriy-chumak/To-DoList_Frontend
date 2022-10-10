@@ -1,15 +1,18 @@
 let allTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let input = null;
 
 window.onload = () => {
-  input = document.querySelector("input"); //document 100% have a input
-  input.focus();
   render();
 };
 
 
 const addTask = () => {
-  if (!input.value.trim() && input.value !== "0") {
+  let input = document.querySelector("input");
+
+  if (!input) {
+    alert("Error. Input not avaliable.")
+  }
+
+  if (!input.value.trim()) {
     alert("Поле не может быть пустым");
     input.classList.add("invalid");
     return;
@@ -28,7 +31,13 @@ const addTask = () => {
 };
 
 const render = () => {
-  const content = document.getElementsByClassName("content")[0]; //If content === null, we skip next step and started render page 
+  const content = document.getElementsByClassName("content")[0];
+
+  if (!content) {
+    alert("Error, render not available.");
+    return;
+  }
+
   while (content.firstChild) {
     content.removeChild(content.firstChild);
   }
@@ -56,6 +65,7 @@ const render = () => {
 
       const imageEdit = document.createElement("img");
       imageEdit.src = "./image/edit.svg";
+      imageEdit.alt = "Edit";
       imageEdit.className = "container__image";
 
       buttonEdit.appendChild(imageEdit);
@@ -70,6 +80,7 @@ const render = () => {
 
     const imageDelete = document.createElement("img");
     imageDelete.src = "./image/trash.svg";
+    imageDelete.alt = "Delete";
     imageDelete.className = "container__image";
 
     buttonDelete.appendChild(imageDelete);
@@ -101,7 +112,10 @@ const removeTask = (index) => {
 const changeTask = (index) => {
   const item = document.getElementById(`task-${index}`);
   const textValue = allTasks[index].text;
-  let buttonArray = item.querySelectorAll(".container__button"); //item && buttonArray cannot be equal to null because if they are null, then the elements do not exist, and if they do not exist, we will not be able to get into this script
+  let buttonArray = item.querySelectorAll(".container__button");
+  if (!buttonArray) {
+    alert("Error. Change not avaliable.")
+  }
 
   buttonArray.forEach((element) => {
     item.removeChild(element);
@@ -122,11 +136,15 @@ const changeTask = (index) => {
   const confirmEdit = document.createElement("img");
   confirmEdit.className = "container__image";
   confirmEdit.src = "./image/check.svg";
+  confirmEdit.alt = "confirm";
 
   buttonConfirm.appendChild(confirmEdit);
   item.appendChild(buttonConfirm);
   buttonConfirm.onclick = () => {
-    confirmChange(editInput.value, index);
+    if (editInput.value.trim()) {    
+      confirmChange(editInput.value, index);  
+    }
+    alert("Нельзя сохранить задачу без текста");
   };
 
   const buttonCancel = document.createElement("button");
@@ -135,6 +153,7 @@ const changeTask = (index) => {
   const cancelEdit = document.createElement("img");
   cancelEdit.className = "container__image";
   cancelEdit.src = "./image/times.svg";
+  cancelEdit.alt = "cancel";
 
   buttonCancel.appendChild(cancelEdit);
   item.appendChild(buttonCancel);
@@ -144,11 +163,6 @@ const changeTask = (index) => {
 };
 
 const confirmChange = (editText, index) => {
-  if (!editText) {
-    alert("Нельзя сохранить задачу без текста");
-
-    return render();
-  }
   allTasks[index].text = editText;  
   localStorage.setItem("tasks", JSON.stringify(allTasks));
   render();
