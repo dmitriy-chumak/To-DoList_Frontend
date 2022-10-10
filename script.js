@@ -48,6 +48,7 @@ const render = () => {
     container.id = `task-${index}`;
     container.className = "task-container";
     const checkbox = document.createElement("input");
+    checkbox.id = "checkbox";
     checkbox.type = "checkbox";
     checkbox.checked = checkTask;
     checkbox.onchange = () => {
@@ -112,11 +113,13 @@ const removeTask = (index) => {
 const changeTask = (index) => {
   const item = document.getElementById(`task-${index}`);
   const textValue = allTasks[index].text;
+  const check = item.querySelector("#checkbox");
   let buttonArray = item.querySelectorAll(".container__button");
-  if (!buttonArray) {
+  if (!buttonArray || !check) {
     alert("Error. Change not avaliable.")
   }
 
+  item.removeChild(check);
   buttonArray.forEach((element) => {
     item.removeChild(element);
   });
@@ -141,10 +144,7 @@ const changeTask = (index) => {
   buttonConfirm.appendChild(confirmEdit);
   item.appendChild(buttonConfirm);
   buttonConfirm.onclick = () => {
-    if (editInput.value.trim()) {    
-      confirmChange(editInput.value, index);  
-    }
-    alert("Нельзя сохранить задачу без текста");
+    editInput.value.trim() ? confirmChange(editInput.value, index) : alert("Нельзя сохранить задачу без текста");
   };
 
   const buttonCancel = document.createElement("button");
