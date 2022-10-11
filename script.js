@@ -4,12 +4,11 @@ window.onload = () => {
   render();
 };
 
-
 const addTask = () => {
   let input = document.querySelector("input");
 
   if (!input) {
-    alert("Error. Input not avaliable.")
+    alert("Error. Input not avaliable.");
   }
 
   if (!input.value.trim()) {
@@ -43,12 +42,12 @@ const render = () => {
   }
 
   allTasks.forEach((element, index) => {
-    const {text: textTask, isCheck: checkTask} = element;
+    const { text: textTask, isCheck: checkTask } = element;
     const container = document.createElement("div");
     container.id = `task-${index}`;
     container.className = "task-container";
     const checkbox = document.createElement("input");
-    checkbox.id = "checkbox";
+    checkbox.className = "task-checkbox";
     checkbox.type = "checkbox";
     checkbox.checked = checkTask;
     checkbox.onchange = () => {
@@ -112,23 +111,13 @@ const removeTask = (index) => {
 
 const changeTask = (index) => {
   const item = document.getElementById(`task-${index}`);
-  const textValue = allTasks[index].text;
-  const check = item.querySelector("#checkbox");
-  let buttonArray = item.querySelectorAll(".container__button");
-  if (!buttonArray || !check) {
-    alert("Error. Change not avaliable.")
+
+  while (item.firstChild) {
+    item.removeChild(item.firstChild);
   }
 
-  item.removeChild(check);
-  buttonArray.forEach((element) => {
-    item.removeChild(element);
-  });
-
-  buttonArray = item.querySelector(".text-task");
-  item.removeChild(buttonArray);
-
   const editInput = document.createElement("input");
-  editInput.value = textValue;
+  editInput.value = allTasks[index].text;
   editInput.className = "input-data__input";
   item.appendChild(editInput);
   editInput.focus();
@@ -163,7 +152,7 @@ const changeTask = (index) => {
 };
 
 const confirmChange = (editText, index) => {
-  allTasks[index].text = editText;  
+  allTasks[index].text = editText;
   localStorage.setItem("tasks", JSON.stringify(allTasks));
   render();
 };
