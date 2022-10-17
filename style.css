@@ -71,3 +71,14 @@
   border-color: red;
 }
 
+.error_box {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  color: red;
+  font-weight: bold;
+  width: 200px;
+  max-height: 98px;
+  overflow: hidden;
+  letter-spacing: 1px;
+  text-align: center;
+}

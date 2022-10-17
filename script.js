@@ -1,57 +1,86 @@
-let allTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
-window.onload = () => {
-  render();
+let allTasks = [];
+const headers = {
+  "Content-Type": "application/json;charset=utf-8",
+  "Access-Control-Allow-Origin": "*",
 };
 
-const addTask = () => {
-  let input = document.querySelector("input");
+window.onload = async () => {
+  getTaskFromDB();
+};
 
-  if (!input) {
-    alert("Error. Input not avaliable.");
+const getTaskFromDB = async () => {
+  try {
+    const respon = await fetch('http://localhost:8080/tasks', {
+      method: "GET",
+    });
+    const result = await respon.json();
+    allTasks = result.data;
+    render();
+  } catch (e) {
+    printError('Ошибка загрузки');
+  }
+}
+
+const addTask = async () => {
+  const input = document.querySelector("input");
+
+  if (input === null) {
+    return printError("Ошибка добавления");
   }
 
   if (!input.value.trim()) {
-    alert("Поле не может быть пустым");
     input.classList.add("invalid");
-    return;
+    return printError("Поле не может быть пустым");
   }
 
   input.classList.remove("invalid");
 
-  allTasks.push({
-    text: input.value,
-    isCheck: false,
-  });
-  localStorage.setItem("tasks", JSON.stringify(allTasks));
-  input.value = "";
+  try {
+    const respon = await fetch('http://localhost:8080/tasks', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        text: input.value
+      }),
+    });
 
-  render();
+    const result = await respon.json();
+    allTasks.push(result);
+    input.value = '';
+
+    render();
+  } catch (e) {
+    printError('Ошибка добавления');
+  }
 };
 
 const render = () => {
   const content = document.getElementsByClassName("content")[0];
 
   if (!content) {
-    alert("Error, render not available.");
-    return;
+    return printError("Ошибка рендера");
   }
 
   while (content.firstChild) {
     content.removeChild(content.firstChild);
   }
 
-  allTasks.forEach((element, index) => {
+  const copyAllTasks = [...allTasks];
+  copyAllTasks.sort((a, b) => a.isCheck > b.isCheck ? 1 : a.isCheck < b.isCheck ? -1 : 0);
+
+  copyAllTasks.forEach((element) => {
+    const id = element._id;
+
     const { text: textTask, isCheck: checkTask } = element;
     const container = document.createElement("div");
-    container.id = `task-${index}`;
+    container.id = `task-${id}`;
     container.className = "task-container";
     const checkbox = document.createElement("input");
     checkbox.className = "task-checkbox";
     checkbox.type = "checkbox";
     checkbox.checked = checkTask;
     checkbox.onchange = () => {
-      onChangeCheckbox(index);
+      onChangeCheckbox(id);
     };
     container.appendChild(checkbox);
     const text = document.createElement("p");
@@ -71,7 +100,7 @@ const render = () => {
       buttonEdit.appendChild(imageEdit);
       container.appendChild(buttonEdit);
       buttonEdit.onclick = () => {
-        changeTask(index);
+        changeTask(id);
       };
     }
 
@@ -86,38 +115,97 @@ const render = () => {
     buttonDelete.appendChild(imageDelete);
     container.appendChild(buttonDelete);
     buttonDelete.onclick = () => {
-      removeTask(index);
+      removeTask(id);
     };
 
     content.appendChild(container);
   });
 };
 
-const onChangeCheckbox = (index) => {
-  allTasks[index].isCheck = !allTasks[index].isCheck;
-  allTasks = _.sortBy(allTasks, "isCheck");
-  localStorage.setItem("tasks", JSON.stringify(allTasks));
-  render();
-};
+const onChangeCheckbox = async (id) => {
+  try {  
+    const task = allTasks.find(element => element._id === id);
+    const changeCheck = !task.isCheck;
 
-const removeTask = (index) => {
-  const flag = confirm("Вы действительно хотите удалить задачу?");
-  if (flag) {
-    allTasks.splice(index, 1);
-    localStorage.setItem("tasks", JSON.stringify(allTasks));
+    const respon = await fetch(`http://localhost:8080/tasks/isCheck/${id}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        isCheck: changeCheck,
+      })
+    });
+
+    const result = await respon.json();
+
+    for (let i = 0; i < allTasks.length; i++) {
+      if (allTasks[i]._id === result._id) {
+        allTasks[i].isCheck = changeCheck;
+        return render();
+      }
+    }
+
+    throw new Error();
+  } catch (e) {
+    printError("Ошибка изменения выполнения.");
   }
-  render();
 };
 
-const changeTask = (index) => {
-  const item = document.getElementById(`task-${index}`);
+const removeTask = async (id) => {
+  try {
+    const respon = await fetch(`http://localhost:8080/tasks/${id}`, {
+      method: "DELETE",
+    });
+
+    const result = await respon.json();
+
+    if (result.deletedCount != 1) {
+      throw new Error();
+    }
+
+    allTasks.forEach((element, index) => {
+      if (element._id === id) {
+        allTasks.splice(index, 1);
+      }
+    });
+
+    render();
+  } catch (error) {
+    printError('Ошибка удаления');
+  }
+};
+
+const deleteAll = async () => {
+  try {
+    const respon = await fetch(`http://localhost:8080/tasks`, {
+      method: "DELETE",
+    });
+    
+    const result = await respon.json();
+
+    if (result.deletedCount !== allTasks.length) {
+      throw new Error();
+    }
+
+    allTasks = [];
+    render();
+  } catch (error) {
+    printError('Ошибка удаления');
+  }
+}
+
+const changeTask = (id) => {
+  const item = document.getElementById(`task-${id}`);
+
+  if (item === null) {
+    return printError('Ошибка');
+  }
 
   while (item.firstChild) {
     item.removeChild(item.firstChild);
   }
 
   const editInput = document.createElement("input");
-  editInput.value = allTasks[index].text;
+  editInput.value = allTasks.find(element => element._id === id).text;
   editInput.className = "input-data__input";
   item.appendChild(editInput);
   editInput.focus();
@@ -133,7 +221,7 @@ const changeTask = (index) => {
   buttonConfirm.appendChild(confirmEdit);
   item.appendChild(buttonConfirm);
   buttonConfirm.onclick = () => {
-    editInput.value.trim() ? confirmChange(editInput.value, index) : alert("Нельзя сохранить задачу без текста");
+    editInput.value.trim() ? confirmChange(editInput.value, id) : alert("Нельзя сохранить задачу без текста");
   };
 
   const buttonCancel = document.createElement("button");
@@ -151,8 +239,37 @@ const changeTask = (index) => {
   };
 };
 
-const confirmChange = (editText, index) => {
-  allTasks[index].text = editText;
-  localStorage.setItem("tasks", JSON.stringify(allTasks));
-  render();
+const confirmChange = async (editText, id) => {
+  try {
+    const respon = await fetch(`http://localhost:8080/tasks/text/${id}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        text: editText,
+      })
+    });
+
+    const result = await respon.json();
+    for (let i = 0; i < allTasks.length; i++) {
+      if (allTasks[i]._id === result._id) {
+        allTasks[i].text = editText;
+        return render();
+      }
+    }
+
+    throw new Error();
+  } catch (e) {
+    printError('Ошибка принятия изменений');
+  }
 };
+
+const printError = (text) => {
+  let error = document.getElementById('errorBox1');
+  if (!error) {
+    alert('Ошибка! перезагрузите страницу');
+    return;
+  }
+
+  error.innerText = text;
+  return;
+}
