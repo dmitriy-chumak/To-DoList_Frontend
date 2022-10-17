@@ -1,4 +1,5 @@
 let allTasks = [];
+const localhost = 'http://localhost:8080/tasks'
 const headers = {
   "Content-Type": "application/json;charset=utf-8",
   "Access-Control-Allow-Origin": "*",
@@ -10,7 +11,7 @@ window.onload = async () => {
 
 const getTaskFromDB = async () => {
   try {
-    const response = await fetch('http://localhost:8080/tasks', {
+    const response = await fetch(`${localhost}`, {
       method: "GET",
     });
     const result = await response.json();
@@ -36,7 +37,7 @@ const addTask = async () => {
   input.classList.remove("invalid");
 
   try {
-    const respon = await fetch('http://localhost:8080/tasks', {
+    const respon = await fetch(`${localhost}`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -127,7 +128,7 @@ const onChangeCheckbox = async (id) => {
     const task = allTasks.find(element => element._id === id);
     const changeCheck = !task.isCheck;
 
-    const respon = await fetch(`http://localhost:8080/tasks/isCheck/${id}`, {
+    const respon = await fetch(`${localhost}/isCheck/${id}`, {
       method: "PATCH",
       headers,
       body: JSON.stringify({
@@ -152,7 +153,7 @@ const onChangeCheckbox = async (id) => {
 
 const removeTask = async (id) => {
   try {
-    const respon = await fetch(`http://localhost:8080/tasks/${id}`, {
+    const respon = await fetch(`${localhost}/${id}`, {
       method: "DELETE",
     });
 
@@ -176,7 +177,7 @@ const removeTask = async (id) => {
 
 const deleteAll = async () => {
   try {
-    const respon = await fetch(`http://localhost:8080/tasks`, {
+    const respon = await fetch(`${localhost}`, {
       method: "DELETE",
     });
     
@@ -241,7 +242,7 @@ const changeTask = (id) => {
 
 const confirmChange = async (editText, id) => {
   try {
-    const respon = await fetch(`http://localhost:8080/tasks/text/${id}`, {
+    const respon = await fetch(`${localhost}/text/${id}`, {
       method: "PATCH",
       headers,
       body: JSON.stringify({
