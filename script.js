@@ -10,10 +10,10 @@ window.onload = async () => {
 
 const getTaskFromDB = async () => {
   try {
-    const respon = await fetch('http://localhost:8080/tasks', {
+    const response = await fetch('http://localhost:8080/tasks', {
       method: "GET",
     });
-    const result = await respon.json();
+    const result = await response.json();
     allTasks = result.data;
     render();
   } catch (e) {
