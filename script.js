@@ -17,7 +17,7 @@ const getTaskFromDB = async () => {
     const result = await response.json();
     allTasks = result.data;
     render();
-  } catch (e) {
+  } catch (err) {
     printError('Ошибка загрузки');
   }
 }
@@ -26,18 +26,19 @@ const addTask = async () => {
   const input = document.querySelector("input");
 
   if (input === null) {
-    return printError("Ошибка добавления");
+    return;
   }
 
   if (!input.value.trim()) {
     input.classList.add("invalid");
-    return printError("Поле не может быть пустым");
+    printError("Поле не может быть пустым");
+    return 
   }
 
   input.classList.remove("invalid");
 
   try {
-    const respon = await fetch(`${localhost}`, {
+    const response = await fetch(`${localhost}`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -45,12 +46,12 @@ const addTask = async () => {
       }),
     });
 
-    const result = await respon.json();
+    const result = await response.json();
     allTasks.push(result);
     input.value = '';
 
     render();
-  } catch (e) {
+  } catch (err) {
     printError('Ошибка добавления');
   }
 };
@@ -59,7 +60,8 @@ const render = () => {
   const content = document.getElementsByClassName("content")[0];
 
   if (!content) {
-    return printError("Ошибка рендера");
+    printError("Ошибка рендера");
+    return;
   }
 
   while (content.firstChild) {
@@ -70,9 +72,7 @@ const render = () => {
   copyAllTasks.sort((a, b) => a.isCheck > b.isCheck ? 1 : a.isCheck < b.isCheck ? -1 : 0);
 
   copyAllTasks.forEach((element) => {
-    const id = element._id;
-
-    const { text: textTask, isCheck: checkTask } = element;
+    const { text: textTask, isCheck: checkTask, _id: id } = element;
     const container = document.createElement("div");
     container.id = `task-${id}`;
     container.className = "task-container";
@@ -128,7 +128,7 @@ const onChangeCheckbox = async (id) => {
     const task = allTasks.find(element => element._id === id);
     const changeCheck = !task.isCheck;
 
-    const respon = await fetch(`${localhost}/isCheck/${id}`, {
+    const response = await fetch(`${localhost}/isCheck/${id}`, {
       method: "PATCH",
       headers,
       body: JSON.stringify({
@@ -136,52 +136,45 @@ const onChangeCheckbox = async (id) => {
       })
     });
 
-    const result = await respon.json();
+    const result = await response.json();
 
-    for (let i = 0; i < allTasks.length; i++) {
-      if (allTasks[i]._id === result._id) {
-        allTasks[i].isCheck = changeCheck;
-        return render();
+    allTasks.forEach(element => {
+      if (element._id === result._id) {
+        element.isCheck = result.isCheck;
       }
-    }
-
-    throw new Error();
-  } catch (e) {
+    });
+  } catch (err) {
     printError("Ошибка изменения выполнения.");
   }
 };
 
 const removeTask = async (id) => {
   try {
-    const respon = await fetch(`${localhost}/${id}`, {
+    const response = await fetch(`${localhost}/${id}`, {
       method: "DELETE",
     });
 
-    const result = await respon.json();
+    const result = await response.json();
 
-    if (result.deletedCount != 1) {
+    if (result.deletedCount !== 1) {
       throw new Error();
     }
 
-    allTasks.forEach((element, index) => {
-      if (element._id === id) {
-        allTasks.splice(index, 1);
-      }
-    });
+    allTasks.filter(element => element._id !== id);
 
     render();
-  } catch (error) {
+  } catch (err) {
     printError('Ошибка удаления');
   }
 };
 
-const deleteAll = async () => {
+const deleteAllTasks = async () => {
   try {
-    const respon = await fetch(`${localhost}`, {
+    const response = await fetch(`${localhost}`, {
       method: "DELETE",
     });
     
-    const result = await respon.json();
+    const result = await response.json();
 
     if (result.deletedCount !== allTasks.length) {
       throw new Error();
@@ -189,26 +182,27 @@ const deleteAll = async () => {
 
     allTasks = [];
     render();
-  } catch (error) {
+  } catch (err) {
     printError('Ошибка удаления');
   }
 }
 
 const changeTask = (id) => {
-  const item = document.getElementById(`task-${id}`);
+  const task = document.getElementById(`task-${id}`);
 
-  if (item === null) {
-    return printError('Ошибка');
+  if (task === null) {
+    printError('Ошибка');
+    return;
   }
 
-  while (item.firstChild) {
-    item.removeChild(item.firstChild);
+  while (task.firstChild) {
+    task.removeChild(task.firstChild);
   }
 
   const editInput = document.createElement("input");
   editInput.value = allTasks.find(element => element._id === id).text;
   editInput.className = "input-data__input";
-  item.appendChild(editInput);
+  task.appendChild(editInput);
   editInput.focus();
 
   const buttonConfirm = document.createElement("button");
@@ -220,9 +214,9 @@ const changeTask = (id) => {
   confirmEdit.alt = "confirm";
 
   buttonConfirm.appendChild(confirmEdit);
-  item.appendChild(buttonConfirm);
+  task.appendChild(buttonConfirm);
   buttonConfirm.onclick = () => {
-    editInput.value.trim() ? confirmChange(editInput.value, id) : alert("Нельзя сохранить задачу без текста");
+    editInput.value.trim() ? confirmChange(editInput.value, id) : printError("Нельзя сохранить задачу без текста");
   };
 
   const buttonCancel = document.createElement("button");
@@ -234,7 +228,7 @@ const changeTask = (id) => {
   cancelEdit.alt = "cancel";
 
   buttonCancel.appendChild(cancelEdit);
-  item.appendChild(buttonCancel);
+  task.appendChild(buttonCancel);
   buttonCancel.onclick = () => {
     render();
   };
@@ -242,35 +236,35 @@ const changeTask = (id) => {
 
 const confirmChange = async (editText, id) => {
   try {
-    const respon = await fetch(`${localhost}/text/${id}`, {
+    const response = await fetch(`${localhost}/text/${id}`, {
       method: "PATCH",
       headers,
       body: JSON.stringify({
         text: editText,
       })
     });
-
-    const result = await respon.json();
-    for (let i = 0; i < allTasks.length; i++) {
-      if (allTasks[i]._id === result._id) {
-        allTasks[i].text = editText;
-        return render();
-      }
+    const result = await response.json();
+    if (!result) {
+      throw new Error();
     }
 
-    throw new Error();
-  } catch (e) {
+    allTasks.forEach(element => {
+      if (element._id === result._id) {
+        element.text = result.text;
+      }
+    });
+
+    render();
+  } catch (err) {
     printError('Ошибка принятия изменений');
   }
 };
 
 const printError = (text) => {
-  let error = document.getElementById('errorBox1');
+  const error = document.getElementById('error_box');
   if (!error) {
-    alert('Ошибка! перезагрузите страницу');
     return;
   }
 
   error.innerText = text;
-  return;
 }
