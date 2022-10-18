@@ -18,7 +18,7 @@ const getTaskFromDB = async () => {
     allTasks = result.data;
     render();
   } catch (err) {
-    printError(err);
+    printError('Ошибка получения данных');
   }
 }
 
@@ -126,7 +126,7 @@ const onChangeCheckbox = async (id) => {
     const task = allTasks.find(element => element._id === id);
     const changeCheck = !task.isCheck;
 
-    const response = await fetch(`${localhost}/isCheck/${id}`, {
+    const response = await fetch(`${localhost}/ischeck/${id}`, {
       method: "PATCH",
       headers,
       body: JSON.stringify({
@@ -159,7 +159,7 @@ const removeTask = async (id) => {
       throw new Error();
     }
 
-    allTasks.filter(element => element._id !== id);
+    allTasks = allTasks.filter(element => element._id !== id);
     render();
   } catch (err) {
     printError('Ошибка удаления');
