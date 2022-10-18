@@ -143,6 +143,8 @@ const onChangeCheckbox = async (id) => {
         element.isCheck = result.isCheck;
       }
     });
+
+    render();
   } catch (err) {
     printError("Ошибка изменения выполнения.");
   }
