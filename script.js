@@ -5,7 +5,7 @@ const headers = {
   "Access-Control-Allow-Origin": "*",
 };
 
-window.onload = async () => {
+window.onload = () => {
   getTaskFromDB();
 };
 
@@ -18,7 +18,7 @@ const getTaskFromDB = async () => {
     allTasks = result.data;
     render();
   } catch (err) {
-    printError('Ошибка загрузки');
+    printError(err);
   }
 }
 
@@ -32,7 +32,7 @@ const addTask = async () => {
   if (!input.value.trim()) {
     input.classList.add("invalid");
     printError("Поле не может быть пустым");
-    return 
+    return;
   }
 
   input.classList.remove("invalid");
@@ -49,7 +49,6 @@ const addTask = async () => {
     const result = await response.json();
     allTasks.push(result);
     input.value = '';
-
     render();
   } catch (err) {
     printError('Ошибка добавления');
@@ -59,8 +58,7 @@ const addTask = async () => {
 const render = () => {
   const content = document.getElementsByClassName("content")[0];
 
-  if (!content) {
-    printError("Ошибка рендера");
+  if (content === null) {
     return;
   }
 
@@ -89,7 +87,7 @@ const render = () => {
     text.className = checkTask ? "text-task done-text" : "text-task";
     container.appendChild(text);
 
-    if (!element.isCheck) {
+    if (!checkTask) {
       const buttonEdit = document.createElement("button");
       buttonEdit.className = "container__button";
 
@@ -155,7 +153,6 @@ const removeTask = async (id) => {
     const response = await fetch(`${localhost}/${id}`, {
       method: "DELETE",
     });
-
     const result = await response.json();
 
     if (result.deletedCount !== 1) {
@@ -163,7 +160,6 @@ const removeTask = async (id) => {
     }
 
     allTasks.filter(element => element._id !== id);
-
     render();
   } catch (err) {
     printError('Ошибка удаления');
@@ -175,7 +171,6 @@ const deleteAllTasks = async () => {
     const response = await fetch(`${localhost}`, {
       method: "DELETE",
     });
-    
     const result = await response.json();
 
     if (result.deletedCount !== allTasks.length) {
@@ -193,7 +188,6 @@ const changeTask = (id) => {
   const task = document.getElementById(`task-${id}`);
 
   if (task === null) {
-    printError('Ошибка');
     return;
   }
 
@@ -218,7 +212,7 @@ const changeTask = (id) => {
   buttonConfirm.appendChild(confirmEdit);
   task.appendChild(buttonConfirm);
   buttonConfirm.onclick = () => {
-    editInput.value.trim() ? confirmChange(editInput.value, id) : printError("Нельзя сохранить задачу без текста");
+    confirmChange(editInput.value, id);
   };
 
   const buttonCancel = document.createElement("button");
@@ -237,6 +231,11 @@ const changeTask = (id) => {
 };
 
 const confirmChange = async (editText, id) => {
+  if (editText.trim() === '') {
+    printError("Нельзя сохранить задачу без текста");
+    return;
+  }
+
   try {
     const response = await fetch(`${localhost}/text/${id}`, {
       method: "PATCH",
@@ -246,6 +245,7 @@ const confirmChange = async (editText, id) => {
       })
     });
     const result = await response.json();
+
     if (!result) {
       throw new Error();
     }
@@ -264,7 +264,7 @@ const confirmChange = async (editText, id) => {
 
 const printError = (text) => {
   const error = document.getElementById('error_box');
-  if (!error) {
+  if (error === null) {
     return;
   }
 
