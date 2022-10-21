@@ -6,10 +6,10 @@ const headers = {
 };
 
 window.onload = () => {
-  getTaskFromDB();
+  getAllTasks();
 };
 
-const getTaskFromDB = async () => {
+const getAllTasks = async () => {
   try {
     const response = await fetch(`${localhost}`, {
       method: "GET",
